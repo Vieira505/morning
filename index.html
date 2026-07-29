@@ -1,447 +1,766 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kids Morning Dashboard</title>
-  <style>
-    :root {
-      --bg-color: #0f172a;
-      --card-bg: #1e293b;
-      --card-hover: #334155;
-      --text-color: #f8fafc;
-      --text-muted: #94a3b8;
-      --accent-color: #38bdf8;
-      --success-bg: #15803d;
-      --success-border: #22c55e;
-      --focus-outline: #facc15;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Morning Launch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sky-top:#16213E;
+    --sky-mid:#5B6EA8;
+    --sky-amber:#F2A65A;
+    --sun:#FFD873;
+    --sun-core:#FFB347;
+    --t-color:#5B8DEF;
+    --t-glow:#5B8DEF66;
+    --y-color:#EF6B6B;
+    --y-glow:#EF6B6B66;
+    --card:#FDF8F0;
+    --card-line:#E7DFD0;
+    --ink:#1B2A4A;
+    --ink-soft:#5B6685;
+    --success:#3FA772;
+    --focus-ring:#FFD873;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;width:100%;height:100%;overflow:hidden;
+    font-family:'Inter',sans-serif;
+    background:linear-gradient(180deg,var(--sky-top) 0%, var(--sky-mid) 55%, var(--sky-amber) 100%);
+    color:var(--ink);
+  }
+  #app{
+    width:100vw;height:100vh;
+    display:flex;flex-direction:column;
+    padding:2.2vh 2.2vw;
+    gap:1.6vh;
+    position:relative;
+  }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      user-select: none;
-    }
+  /* ---------- Top bar ---------- */
+  #topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    color:#FFF9EE;
+    flex:0 0 auto;
+  }
+  #topbar h1{
+    font-family:'Fredoka',sans-serif;
+    font-weight:700;
+    font-size:clamp(24px, 3.4vh, 46px);
+    margin:0;
+    letter-spacing:0.5px;
+    text-shadow:0 2px 10px rgba(0,0,0,0.25);
+  }
+  #topbar .sub{
+    font-size:clamp(11px,1.5vh,16px);
+    color:#FFF9EEcc;
+    font-weight:500;
+    margin-top:0.3vh;
+  }
+  #status-pod{
+    display:flex;align-items:center;gap:2vw;
+  }
+  .pod{
+    background:rgba(255,255,255,0.14);
+    backdrop-filter:blur(6px);
+    border:1px solid rgba(255,255,255,0.25);
+    border-radius:16px;
+    padding:0.9vh 1.4vw;
+    display:flex;align-items:center;gap:0.8vw;
+    min-width:0;
+  }
+  .pod .icon{font-size:clamp(18px,2.6vh,32px);line-height:1;}
+  .pod .val{
+    font-family:'JetBrains Mono',monospace;
+    font-weight:700;
+    font-size:clamp(16px,2.4vh,28px);
+    color:#FFF9EE;
+  }
+  .pod .lbl{
+    font-size:clamp(9px,1.1vh,12px);
+    color:#FFF9EEaa;
+    text-transform:uppercase;
+    letter-spacing:1px;
+  }
 
-    /* Lock layout to viewport height - ZERO SCROLLING */
-    body {
-      background-color: var(--bg-color);
-      color: var(--text-color);
-      height: 100vh;
-      width: 100vw;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      padding: 2vw;
-    }
+  /* ---------- Leave-by bar ---------- */
+  #leavebar-wrap{
+    flex:0 0 auto;
+    display:flex;align-items:center;gap:1vw;
+  }
+  #leavebar-track{
+    position:relative;
+    flex:1 1 auto;
+    height:clamp(14px,2vh,22px);
+    background:rgba(255,255,255,0.18);
+    border:1px solid rgba(255,255,255,0.28);
+    border-radius:20px;
+    overflow:hidden;
+  }
+  #leavebar-fill{
+    position:absolute;left:0;top:0;bottom:0;
+    width:0%;
+    border-radius:20px;
+    background:var(--success);
+    transition:width 1s linear, background .6s ease;
+  }
+  #leavebar-fill.warn{background:#E8A93B;}
+  #leavebar-fill.late{background:#E05C5C;}
+  #leavebar-marker{
+    position:absolute;top:-4px;bottom:-4px;
+    width:3px;background:#FFF9EE;
+    right:0;
+    box-shadow:0 0 6px rgba(0,0,0,0.4);
+  }
+  #leavebar-label{
+    font-family:'JetBrains Mono',monospace;
+    font-weight:700;
+    font-size:clamp(11px,1.6vh,17px);
+    color:#FFF9EE;
+    white-space:nowrap;
+    flex:0 0 auto;
+    min-width:max-content;
+  }
+  #leavebar-label .leave-time{
+    opacity:0.75;font-weight:500;
+    font-family:'Inter',sans-serif;
+    margin-left:0.6vw;
+  }
 
-    /* Top Navigation Bar */
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      height: 12vh;
-      background: var(--card-bg);
-      padding: 0 3vw;
-      border-radius: 16px;
-      margin-bottom: 2vh;
-      border: 2px solid #334155;
-    }
+  /* ---------- Sun track ---------- */
+  #suntrack{
+    flex:0 0 auto;
+    height:6.5vh;
+    position:relative;
+    margin:0 0.4vw;
+  }
+  #suntrack svg{width:100%;height:100%;display:block;overflow:visible;}
+  #sun-icon{
+    filter:drop-shadow(0 0 14px var(--sun));
+    transition:offset-distance 1s cubic-bezier(.34,1.56,.64,1);
+  }
 
-    .time-display {
-      font-size: 3.5vw;
-      font-weight: 800;
-      letter-spacing: -1px;
-      color: var(--accent-color);
-    }
+  /* ---------- Columns ---------- */
+  #board{
+    flex:1 1 auto;
+    display:flex;
+    gap:1.8vw;
+    min-height:0;
+  }
+  .col{
+    flex:1 1 0;
+    display:flex;flex-direction:column;
+    background:var(--card);
+    border-radius:26px;
+    padding:1.8vh 1.6vw;
+    min-height:0;
+    box-shadow:0 12px 30px rgba(0,0,0,0.18);
+    border-bottom:6px solid var(--accent);
+  }
+  .col.done{
+    background:linear-gradient(160deg,var(--card) 60%, var(--accent-glow) 140%);
+  }
+  .col-head{
+    display:flex;align-items:center;justify-content:space-between;
+    flex:0 0 auto;
+    margin-bottom:1.2vh;
+  }
+  .col-head .name-wrap{display:flex;align-items:center;gap:0.9vw;}
+  .monogram{
+    width:clamp(34px,5.2vh,58px);height:clamp(34px,5.2vh,58px);
+    border-radius:50%;
+    background:var(--accent);
+    color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Fredoka',sans-serif;font-weight:700;
+    font-size:clamp(16px,2.4vh,26px);
+    flex:0 0 auto;
+    box-shadow:0 4px 10px var(--accent-glow);
+  }
+  .col-head h2{
+    font-family:'Fredoka',sans-serif;
+    font-size:clamp(18px,2.9vh,34px);
+    margin:0;color:var(--ink);
+  }
+  .progress-chip{
+    font-family:'JetBrains Mono',monospace;
+    font-weight:700;
+    font-size:clamp(11px,1.5vh,17px);
+    background:var(--ink);
+    color:#fff;
+    padding:0.5vh 1vw;
+    border-radius:20px;
+  }
+  .progress-chip.full{background:var(--success);}
 
-    .title-display {
-      font-size: 2.5vw;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-    }
+  .items{
+    flex:1 1 auto;
+    display:flex;flex-direction:column;
+    gap:1vh;
+    min-height:0;
+    justify-content:center;
+  }
+  .item{
+    display:flex;align-items:center;gap:1vw;
+    background:#fff;
+    border:2px solid var(--card-line);
+    border-radius:16px;
+    padding:1.1vh 1.2vw;
+    cursor:pointer;
+    transition:transform .12s ease, border-color .12s ease, background .15s ease;
+    outline:none;
+    flex:0 1 auto;
+  }
+  .item .box{
+    width:clamp(20px,3vh,34px);height:clamp(20px,3vh,34px);
+    border-radius:9px;
+    border:2.5px solid var(--accent);
+    flex:0 0 auto;
+    display:flex;align-items:center;justify-content:center;
+    transition:background .15s ease;
+  }
+  .item .box svg{width:65%;height:65%;opacity:0;transition:opacity .12s ease;}
+  .item span.label{
+    font-size:clamp(13px,2vh,22px);
+    font-weight:600;
+    color:var(--ink);
+    transition:opacity .12s ease, text-decoration-color .12s ease;
+  }
+  .item.checked{background:var(--accent);}
+  .item.checked .box{background:#fff;}
+  .item.checked .box svg{opacity:1;}
+  .item.checked .box svg path{stroke:var(--accent);}
+  .item.checked span.label{color:#fff;text-decoration:line-through;text-decoration-thickness:2px;}
+  .item.focused{
+    border-color:var(--focus-ring);
+    box-shadow:0 0 0 4px var(--focus-ring)55, 0 6px 16px rgba(0,0,0,0.15);
+    transform:scale(1.02);
+  }
 
-    .weather-display {
-      display: flex;
-      align-items: center;
-      gap: 1vw;
-      font-size: 2.2vw;
-      font-weight: 600;
-      color: var(--text-muted);
-    }
+  .col-foot{
+    flex:0 0 auto;
+    text-align:center;
+    margin-top:1vh;
+    font-family:'Fredoka',sans-serif;
+    font-size:clamp(12px,1.7vh,18px);
+    color:var(--accent);
+    font-weight:600;
+    min-height:2.4vh;
+  }
 
-    /* Main Split-Screen Columns */
-    main {
-      display: flex;
-      gap: 2vw;
-      flex: 1;
-      height: 82vh;
-    }
+  /* ---------- Footer ---------- */
+  #footer{
+    flex:0 0 auto;
+    display:flex;align-items:center;justify-content:center;
+    color:#FFF9EEdd;
+    font-size:clamp(11px,1.5vh,15px);
+    gap:0.6vw;
+  }
+  #footer.celebrate{color:#FFF9EE;font-weight:700;}
 
-    .child-column {
-      flex: 1;
-      background: rgba(30, 41, 59, 0.4);
-      border: 2px solid #334155;
-      border-radius: 24px;
-      padding: 2vh 2vw;
-      display: flex;
-      flex-direction: column;
-    }
+  /* ---------- Gear / settings ---------- */
+  #gear{
+    position:fixed;bottom:1.6vh;right:1.6vw;
+    width:34px;height:34px;
+    border-radius:50%;
+    background:rgba(255,255,255,0.18);
+    border:1px solid rgba(255,255,255,0.3);
+    color:#FFF9EE;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;font-size:16px;
+    opacity:0.55;
+    z-index:50;
+  }
+  #gear:hover{opacity:1;}
 
-    .child-header {
-      font-size: 3vw;
-      font-weight: 800;
-      text-align: center;
-      padding-bottom: 1.5vh;
-      margin-bottom: 2vh;
-      border-bottom: 4px solid var(--accent-color);
-    }
-
-    .task-list {
-      display: flex;
-      flex-direction: column;
-      gap: 1.5vh;
-      flex: 1;
-      justify-content: space-between;
-    }
-
-    /* Chunky Clickable Task Tiles */
-    .task-card {
-      flex: 1;
-      background: var(--card-bg);
-      border: 4px solid transparent;
-      border-radius: 16px;
-      display: flex;
-      align-items: center;
-      padding: 0 2vw;
-      font-size: 2.2vw;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.15s ease;
-      outline: none;
-      position: relative;
-    }
-
-    /* TV D-Pad Focus State - Bright Gold Outline */
-    .task-card:focus {
-      border-color: var(--focus-outline);
-      transform: scale(1.01);
-      box-shadow: 0 0 25px rgba(250, 204, 21, 0.4);
-      z-index: 10;
-    }
-
-    .task-card:hover {
-      background: var(--card-hover);
-    }
-
-    /* Completed Task Styling */
-    .task-card.completed {
-      background: var(--success-bg);
-      border-color: var(--success-border);
-      color: #ffffff;
-      text-decoration: line-through;
-      opacity: 0.9;
-    }
-
-    .task-card.completed:focus {
-      border-color: var(--focus-outline);
-    }
-
-    .checkbox-icon {
-      font-size: 2.8vw;
-      margin-right: 1.5vw;
-      width: 4vw;
-      text-align: center;
-    }
-
-    /* Celebration Banner */
-    #celebration {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(15, 23, 42, 0.95);
-      z-index: 100;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.5s ease;
-    }
-
-    #celebration.active {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .celebration-title {
-      font-size: 6vw;
-      font-weight: 900;
-      color: var(--focus-outline);
-      text-shadow: 0 0 30px rgba(250, 204, 21, 0.6);
-      margin-bottom: 2vh;
-      text-align: center;
-    }
-
-    .celebration-subtitle {
-      font-size: 3vw;
-      color: var(--text-color);
-      margin-bottom: 5vh;
-    }
-
-    .reset-btn {
-      padding: 2vh 4vw;
-      font-size: 2vw;
-      font-weight: 800;
-      background: var(--accent-color);
-      color: #000;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      outline: none;
-    }
-
-    .reset-btn:focus {
-      border: 4px solid var(--focus-outline);
-      box-shadow: 0 0 25px rgba(250, 204, 21, 0.8);
-    }
-  </style>
+  #modal-backdrop{
+    position:fixed;inset:0;background:rgba(15,20,40,0.6);
+    display:none;align-items:center;justify-content:center;z-index:100;
+  }
+  #modal-backdrop.open{display:flex;}
+  #modal{
+    background:var(--card);border-radius:20px;padding:26px 30px;
+    width:min(700px,90vw);max-height:82vh;overflow:auto;
+    font-family:'Inter',sans-serif;color:var(--ink);
+  }
+  #modal h3{font-family:'Fredoka',sans-serif;margin:0 0 14px;}
+  #modal label{display:block;font-weight:600;margin:14px 0 6px;font-size:13px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.5px;}
+  #modal textarea, #modal input{
+    width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--card-line);
+    font-family:'Inter',sans-serif;font-size:14px;resize:vertical;
+  }
+  #modal textarea{min-height:110px;}
+  .modal-row{display:flex;gap:16px;}
+  .modal-row > div{flex:1;}
+  #modal .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;}
+  #modal button{
+    font-family:'Inter',sans-serif;font-weight:600;padding:9px 18px;border-radius:10px;border:none;cursor:pointer;font-size:14px;
+  }
+  #modal .save{background:var(--ink);color:#fff;}
+  #modal .cancel{background:#EFE9DC;color:var(--ink);}
+</style>
 </head>
 <body>
+<div id="app">
 
-  <header>
-    <div class="time-display" id="clock">00:00</div>
-    <div class="title-display">Morning Command Center</div>
-    <div class="weather-display" id="weather">Loading Weather...</div>
-  </header>
-
-  <main>
-    <!-- Child T Column -->
-    <div class="child-column">
-      <div class="child-header" style="color: #60a5fa;">T's Checklist</div>
-      <div class="task-list" id="list-T"></div>
+  <div id="topbar">
+    <div>
+      <h1 id="greeting">Good morning!</h1>
+      <div class="sub" id="datestr">—</div>
     </div>
-
-    <!-- Child Y Column -->
-    <div class="child-column">
-      <div class="child-header" style="color: #f472b6;">Y's Checklist</div>
-      <div class="task-list" id="list-Y"></div>
+    <div id="status-pod">
+      <div class="pod" id="weather-pod">
+        <div class="icon" id="wx-icon">🌤️</div>
+        <div>
+          <div class="val" id="wx-temp">--°</div>
+          <div class="lbl" id="wx-lbl">Loading</div>
+        </div>
+      </div>
+      <div class="pod">
+        <div class="icon">🕐</div>
+        <div>
+          <div class="val" id="clock">--:--</div>
+          <div class="lbl">Time</div>
+        </div>
+      </div>
     </div>
-  </main>
-
-  <!-- Celebration Modal -->
-  <div id="celebration">
-    <div class="celebration-title">🎉 ALL DONE! 🎉</div>
-    <div class="celebration-subtitle">Great job T and Y! You have unlocked TV time.</div>
-    <button class="reset-btn" id="reset-btn" tabindex="0">Reset for Tomorrow</button>
   </div>
 
-  <script>
-    /* --- CONFIGURATION --- */
-    // 1. Customize Names and Tasks here
-    const ROUTINES = {
-      T: [
-        { id: 't1', text: '🛏️ Make Bed' },
-        { id: 't2', text: '🦷 Brush Teeth' },
-        { id: 't3', text: '👕 Get Dressed' },
-        { id: 't4', text: '🎒 Pack School Bag' },
-        { id: 't5', text: '🥣 Eat Breakfast' }
-      ],
-      Y: [
-        { id: 'y1', text: '🛏️ Make Bed' },
-        { id: 'y2', text: '🦷 Brush Teeth' },
-        { id: 'y3', text: '👕 Get Dressed' },
-        { id: 'y4', text: '🎒 Pack School Bag' },
-        { id: 'y5', text: '🥣 Eat Breakfast' }
-      ]
-    };
+  <div id="leavebar-wrap">
+    <div id="leavebar-track">
+      <div id="leavebar-fill"></div>
+      <div id="leavebar-marker"></div>
+    </div>
+    <div id="leavebar-label">
+      <span id="leavebar-remaining">--</span>
+      <span class="leave-time" id="leavebar-leavetime">leave by 8:30 AM</span>
+    </div>
+  </div>
 
-    // 2. Weather Coordinates (Default: South Nowra, NSW, Australia)
-    const WEATHER_LAT = -34.88;
-    const WEATHER_LON = 150.60;
-    /* --------------------- */
+  <div id="suntrack">
+    <svg viewBox="0 0 1000 90" preserveAspectRatio="none">
+      <path id="arc-path" d="M 20 80 Q 500 -30 980 80" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="4" stroke-linecap="round" stroke-dasharray="2 14"/>
+      <circle id="sun-icon" r="16" fill="url(#sunGrad)"/>
+      <defs>
+        <radialGradient id="sunGrad">
+          <stop offset="0%" stop-color="#FFF3C4"/>
+          <stop offset="100%" stop-color="#FFB347"/>
+        </radialGradient>
+      </defs>
+    </svg>
+  </div>
 
-    // Load saved state or initialize empty object
-    let state = JSON.parse(localStorage.getItem('morningRoutineState')) || {};
+  <div id="board">
+    <div class="col" id="col-T" style="--accent:var(--t-color);--accent-glow:var(--t-glow);">
+      <div class="col-head">
+        <div class="name-wrap">
+          <div class="monogram">T</div>
+          <h2 id="name-T">T</h2>
+        </div>
+        <div class="progress-chip" id="chip-T">0/0</div>
+      </div>
+      <div class="items" id="items-T"></div>
+      <div class="col-foot" id="foot-T"></div>
+    </div>
 
-    // Auto-Reset at 3:00 AM logic
-    function checkAutoReset() {
-      const now = new Date();
-      const todayStr = now.toISOString().split('T')[0];
-      const lastReset = localStorage.getItem('lastResetDate');
+    <div class="col" id="col-Y" style="--accent:var(--y-color);--accent-glow:var(--y-glow);">
+      <div class="col-head">
+        <div class="name-wrap">
+          <div class="monogram">Y</div>
+          <h2 id="name-Y">Y</h2>
+        </div>
+        <div class="progress-chip" id="chip-Y">0/0</div>
+      </div>
+      <div class="items" id="items-Y"></div>
+      <div class="col-foot" id="foot-Y"></div>
+    </div>
+  </div>
 
-      // If it's past 3 AM and hasn't been reset today
-      if (now.getHours() >= 3 && lastReset !== todayStr) {
-        state = {};
-        localStorage.setItem('morningRoutineState', JSON.stringify(state));
-        localStorage.setItem('lastResetDate', todayStr);
-        render();
-      }
+  <div id="footer">Use ↑ ↓ ← → on the remote, press Enter/OK to check off a task</div>
+</div>
+
+<div id="gear" onclick="openModal()">⚙</div>
+
+<div id="modal-backdrop">
+  <div id="modal">
+    <h3>Edit checklists</h3>
+    <div class="modal-row">
+      <div>
+        <label>T's name</label>
+        <input id="input-name-T" type="text">
+        <label>T's tasks (one per line)</label>
+        <textarea id="input-items-T"></textarea>
+      </div>
+      <div>
+        <label>Y's name</label>
+        <input id="input-name-Y" type="text">
+        <label>Y's tasks (one per line)</label>
+        <textarea id="input-items-Y"></textarea>
+      </div>
+    </div>
+    <label>Weather location (lat, lon)</label>
+    <input id="input-latlon" type="text" placeholder="-33.8688, 151.2093">
+    <div class="modal-row">
+      <div>
+        <label>Morning starts</label>
+        <input id="input-start" type="time">
+      </div>
+      <div>
+        <label>Leave by</label>
+        <input id="input-leave" type="time">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="cancel" onclick="closeModal()">Cancel</button>
+      <button class="save" onclick="saveModal()">Save</button>
+    </div>
+  </div>
+</div>
+
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="check-svg" viewBox="0 0 24 24">
+    <path d="M4 12.5 L9.5 18 L20 6" fill="none" stroke="#3FA772" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+</svg>
+
+<script>
+const KIDS = ['T','Y'];
+const DEFAULT_ITEMS = {
+  T: ['Brush teeth','Get dressed','Make bed','Eat breakfast','Pack school bag','Deodorant'],
+  Y: ['Brush teeth','Get dressed','Make bed','Eat breakfast','Pack school bag','Deodorant']
+};
+const DEFAULT_LATLON = { lat:-34.563793, lon:150.819122 }; // Sydney
+
+const DEFAULT_SCHEDULE = { start:'06:00', leave:'08:30' };
+
+let state = {
+  names:{T:'T',Y:'Y'},
+  items:{...DEFAULT_ITEMS},
+  latlon:{...DEFAULT_LATLON},
+  schedule:{...DEFAULT_SCHEDULE},
+  checked:{T:[],Y:[]}
+};
+
+let focus = { col:0, idx:0 };
+let colOrder = ['T','Y'];
+
+function todayKey(){
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+async function loadState(){
+  try{
+    const cfg = await window.storage.get('checklist-config', true);
+    if(cfg && cfg.value){
+      const parsed = JSON.parse(cfg.value);
+      state.names = parsed.names || state.names;
+      state.items = parsed.items || state.items;
+      state.latlon = parsed.latlon || state.latlon;
+      state.schedule = parsed.schedule || state.schedule;
     }
+  }catch(e){ /* first run, no config yet */ }
 
-    // Render task items into columns
-    function render() {
-      renderList('T', 'list-T');
-      renderList('Y', 'list-Y');
-      checkAllCompleted();
-      setupDPadNavigation();
+  try{
+    const chk = await window.storage.get('checklist-checked-'+todayKey(), true);
+    if(chk && chk.value){
+      state.checked = JSON.parse(chk.value);
     }
+  }catch(e){
+    state.checked = {T:[],Y:[]};
+  }
+}
 
-    function renderList(childKey, elementId) {
-      const container = document.getElementById(elementId);
-      container.innerHTML = '';
+async function saveConfig(){
+  try{
+    await window.storage.set('checklist-config', JSON.stringify({
+      names:state.names, items:state.items, latlon:state.latlon, schedule:state.schedule
+    }), true);
+  }catch(e){ console.error('save config failed', e); }
+}
 
-      ROUTINES[childKey].forEach((task, index) => {
-        const isDone = !!state[task.id];
-        const card = document.createElement('div');
-        card.className = `task-card ${isDone ? 'completed' : ''}`;
-        card.setAttribute('tabindex', '0');
-        card.setAttribute('data-col', childKey === 'T' ? '0' : '1');
-        card.setAttribute('data-row', index);
-        card.setAttribute('role', 'checkbox');
-        card.setAttribute('aria-checked', isDone);
+async function saveChecked(){
+  try{
+    await window.storage.set('checklist-checked-'+todayKey(), JSON.stringify(state.checked), true);
+  }catch(e){ console.error('save checked failed', e); }
+}
 
-        card.innerHTML = `
-          <span class="checkbox-icon">${isDone ? '✅' : '⬜'}</span>
-          <span>${task.text}</span>
-        `;
+function densityClass(n){
+  if(n<=5) return '';
+  if(n<=8) return 'dense';
+  return 'ultra-dense';
+}
 
-        // Mouse click or OK/Select button on TV remote
-        card.addEventListener('click', () => toggleTask(task.id));
-        
-        // Ensure standard TV OK button triggers click
-        card.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            toggleTask(task.id);
-          }
-        });
+function render(){
+  document.getElementById('datestr').textContent = new Date().toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric'});
 
-        container.appendChild(card);
+  KIDS.forEach(kid=>{
+    document.getElementById('name-'+kid).textContent = state.names[kid] || kid;
+    document.querySelector('#col-'+kid+' .monogram').textContent = (state.names[kid]||kid)[0].toUpperCase();
+
+    const items = state.items[kid] || [];
+    const container = document.getElementById('items-'+kid);
+    container.innerHTML = '';
+
+    // scale row size down as item count grows to guarantee no scroll
+    let scale = 1;
+    if(items.length > 6) scale = 0.88;
+    if(items.length > 8) scale = 0.75;
+    if(items.length > 10) scale = 0.62;
+    container.style.gap = (1*scale)+'vh';
+
+    items.forEach((label, idx)=>{
+      const checked = state.checked[kid]?.includes(idx);
+      const el = document.createElement('div');
+      el.className = 'item' + (checked?' checked':'');
+      el.tabIndex = -1;
+      el.dataset.kid = kid; el.dataset.idx = idx;
+      el.style.padding = (1.1*scale)+'vh '+(1.2)+'vw';
+      el.innerHTML = `
+        <div class="box"><svg><use href="#check-svg"/></svg></div>
+        <span class="label">${escapeHtml(label)}</span>
+      `;
+      el.addEventListener('click', ()=>toggleItem(kid, idx));
+      el.addEventListener('mouseenter', ()=>{
+        focus.col = colOrder.indexOf(kid);
+        focus.idx = idx;
+        applyFocus();
       });
-    }
-
-    function toggleTask(id) {
-      state[id] = !state[id];
-      localStorage.setItem('morningRoutineState', JSON.stringify(state));
-      render();
-    }
-
-    function checkAllCompleted() {
-      const allT = ROUTINES.T.every(task => state[task.id]);
-      const allY = ROUTINES.Y.every(task => state[task.id]);
-      const celebEl = document.getElementById('celebration');
-
-      if (allT && allY && ROUTINES.T.length > 0) {
-        celebEl.classList.add('active');
-        setTimeout(() => {
-          document.getElementById('reset-btn').focus();
-        }, 500);
-      } else {
-        celebEl.classList.remove('active');
-      }
-    }
-
-    // Explicit TV D-Pad Spatial Navigation
-    function setupDPadNavigation() {
-      const cards = Array.from(document.querySelectorAll('.task-card'));
-      
-      cards.forEach(card => {
-        card.addEventListener('keydown', (e) => {
-          const col = parseInt(card.getAttribute('data-col'));
-          const row = parseInt(card.getAttribute('data-row'));
-          let target = null;
-
-          if (e.key === 'ArrowDown') {
-            target = document.querySelector(`.task-card[data-col="${col}"][data-row="${row + 1}"]`);
-          } else if (e.key === 'ArrowUp') {
-            target = document.querySelector(`.task-card[data-col="${col}"][data-row="${row - 1}"]`);
-          } else if (e.key === 'ArrowRight' && col === 0) {
-            target = document.querySelector(`.task-card[data-col="1"][data-row="${row}"]`) || 
-                     document.querySelector(`.task-card[data-col="1"][data-row="0"]`);
-          } else if (e.key === 'ArrowLeft' && col === 1) {
-            target = document.querySelector(`.task-card[data-col="0"][data-row="${row}"]`) ||
-                     document.querySelector(`.task-card[data-col="0"][data-row="0"]`);
-          }
-
-          if (target) {
-            e.preventDefault();
-            target.focus();
-          }
-        });
-      });
-    }
-
-    // Clock Feed
-    function updateClock() {
-      const now = new Date();
-      let hours = now.getHours();
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const ampm = hours >= 12 ? 'PM' : 'AM';
-      hours = hours % 12 || 12;
-      document.getElementById('clock').textContent = `${hours}:${minutes} ${ampm}`;
-    }
-
-    // Open-Meteo Free Weather Feed
-    async function fetchWeather() {
-      const weatherEl = document.getElementById('weather');
-      try {
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${WEATHER_LAT}&longitude=${WEATHER_LON}&current_weather=true`;
-        const response = await fetch(url);
-        const data = await response.json();
-        
-        if (data && data.current_weather) {
-          const temp = Math.round(data.current_weather.temperature);
-          const code = data.current_weather.weathercode;
-          const icon = getWeatherIcon(code);
-          weatherEl.innerHTML = `${icon} ${temp}°C`;
-        }
-      } catch (err) {
-        weatherEl.textContent = 'Weather Unavailable';
-        console.error('Weather fetch error:', err);
-      }
-    }
-
-    // WMO Weather Code Mapper
-    function getWeatherIcon(code) {
-      if (code === 0) return '☀️';
-      if ([1, 2, 3].includes(code)) return '⛅';
-      if ([45, 48].includes(code)) return '🌫️';
-      if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code)) return '🌧️';
-      if ([71, 73, 75, 85, 86].includes(code)) return '❄️';
-      if ([95, 96, 99].includes(code)) return '⛈️';
-      return '🌡️';
-    }
-
-    // Manual Reset Button
-    document.getElementById('reset-btn').addEventListener('click', () => {
-      state = {};
-      localStorage.setItem('morningRoutineState', JSON.stringify(state));
-      render();
+      container.appendChild(el);
     });
 
-    // Initialize App
-    checkAutoReset();
-    render();
-    updateClock();
-    fetchWeather();
+    const total = items.length;
+    const done = (state.checked[kid]||[]).length;
+    const chip = document.getElementById('chip-'+kid);
+    chip.textContent = `${done}/${total}`;
+    chip.classList.toggle('full', total>0 && done===total);
+    document.getElementById('col-'+kid).classList.toggle('done', total>0 && done===total);
+    document.getElementById('foot-'+kid).textContent = (total>0 && done===total) ? '✨ All done!' : '';
+  });
 
-    // Auto-focus first item on load for remote control convenience
-    setTimeout(() => {
-      const firstCard = document.querySelector('.task-card');
-      if (firstCard) firstCard.focus();
-    }, 300);
+  updateSun();
+  applyFocus();
 
-    // Timers
-    setInterval(updateClock, 1000);
-    setInterval(checkAutoReset, 60 * 1000); // Check reset condition every minute
-    setInterval(fetchWeather, 30 * 60 * 1000); // Update weather every 30 mins
-  </script>
+  const allDone = KIDS.every(k=>{
+    const total = (state.items[k]||[]).length;
+    const done = (state.checked[k]||[]).length;
+    return total>0 && done===total;
+  });
+  const footer = document.getElementById('footer');
+  footer.textContent = allDone ? '🎉 Both lists complete — TV time!' : 'Use ↑ ↓ ← → on the remote, press Enter/OK to check off a task';
+  footer.classList.toggle('celebrate', allDone);
+}
+
+function escapeHtml(s){
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function toggleItem(kid, idx){
+  if(!state.checked[kid]) state.checked[kid] = [];
+  const pos = state.checked[kid].indexOf(idx);
+  if(pos>=0) state.checked[kid].splice(pos,1);
+  else state.checked[kid].push(idx);
+  saveChecked();
+  render();
+}
+
+function updateSun(){
+  const totalAll = KIDS.reduce((s,k)=> s + (state.items[k]||[]).length, 0);
+  const doneAll = KIDS.reduce((s,k)=> s + (state.checked[k]||[]).length, 0);
+  const pct = totalAll>0 ? doneAll/totalAll : 0;
+  const path = document.getElementById('arc-path');
+  const len = path.getTotalLength();
+  const pt = path.getPointAtLength(len*pct);
+  const sun = document.getElementById('sun-icon');
+  sun.setAttribute('cx', pt.x);
+  sun.setAttribute('cy', pt.y);
+}
+
+function applyFocus(){
+  document.querySelectorAll('.item').forEach(el=>el.classList.remove('focused'));
+  const kid = colOrder[focus.col];
+  const items = document.querySelectorAll(`#items-${kid} .item`);
+  if(items.length===0) return;
+  focus.idx = Math.max(0, Math.min(focus.idx, items.length-1));
+  const el = items[focus.idx];
+  el.classList.add('focused');
+  el.focus({preventScroll:true});
+}
+
+document.addEventListener('keydown', (e)=>{
+  if(document.getElementById('modal-backdrop').classList.contains('open')) return;
+  const kid = colOrder[focus.col];
+  const items = state.items[kid] || [];
+  switch(e.key){
+    case 'ArrowDown':
+      e.preventDefault();
+      focus.idx = Math.min(focus.idx+1, items.length-1);
+      applyFocus();
+      break;
+    case 'ArrowUp':
+      e.preventDefault();
+      focus.idx = Math.max(focus.idx-1, 0);
+      applyFocus();
+      break;
+    case 'ArrowRight':
+      e.preventDefault();
+      focus.col = Math.min(focus.col+1, colOrder.length-1);
+      applyFocus();
+      break;
+    case 'ArrowLeft':
+      e.preventDefault();
+      focus.col = Math.max(focus.col-1, 0);
+      applyFocus();
+      break;
+    case 'Enter':
+    case ' ':
+      e.preventDefault();
+      toggleItem(kid, focus.idx);
+      break;
+  }
+});
+
+function tickClock(){
+  const d = new Date();
+  document.getElementById('clock').textContent = d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
+}
+setInterval(tickClock, 1000*15);
+
+function parseTimeToday(hhmm){
+  const [h,m] = hhmm.split(':').map(Number);
+  const d = new Date();
+  d.setHours(h, m||0, 0, 0);
+  return d;
+}
+
+function formatClock12(d){
+  return d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});
+}
+
+function updateLeaveBar(){
+  const now = new Date();
+  const start = parseTimeToday(state.schedule.start);
+  const leave = parseTimeToday(state.schedule.leave);
+  const overrun = 20*60*1000; // 20 min of red zone past leave time
+  const windowEnd = new Date(leave.getTime() + overrun);
+
+  const totalMs = windowEnd - start;
+  const elapsedMs = now - start;
+  const pct = Math.max(0, Math.min(1, elapsedMs/totalMs));
+  const markerPct = Math.max(0, Math.min(1, (leave-start)/totalMs));
+
+  const fill = document.getElementById('leavebar-fill');
+  fill.style.width = (pct*100)+'%';
+  document.getElementById('leavebar-marker').style.right = ((1-markerPct)*100)+'%';
+
+  const msToLeave = leave - now;
+  const remainingEl = document.getElementById('leavebar-remaining');
+  fill.classList.remove('warn','late');
+  if(msToLeave <= 0){
+    const late = Math.round(-msToLeave/60000);
+    remainingEl.textContent = late<1 ? 'Time to go!' : `${late} min past leave time`;
+    fill.classList.add('late');
+  }else{
+    const minsLeft = Math.round(msToLeave/60000);
+    if(minsLeft <= 15) fill.classList.add('warn');
+    if(minsLeft >= 60){
+      const h = Math.floor(minsLeft/60), m = minsLeft%60;
+      remainingEl.textContent = `${h}h ${m}m until leave`;
+    }else{
+      remainingEl.textContent = `${minsLeft} min until leave`;
+    }
+  }
+
+  document.getElementById('leavebar-leavetime').textContent = `leave by ${formatClock12(leave)}`;
+}
+setInterval(updateLeaveBar, 1000*10);
+
+function wxIconFor(code){
+  if(code===0) return '☀️';
+  if([1,2].includes(code)) return '🌤️';
+  if(code===3) return '☁️';
+  if([45,48].includes(code)) return '🌫️';
+  if([51,53,55,56,57].includes(code)) return '🌦️';
+  if([61,63,65,66,67,80,81,82].includes(code)) return '🌧️';
+  if([71,73,75,77,85,86].includes(code)) return '🌨️';
+  if([95,96,99].includes(code)) return '⛈️';
+  return '🌡️';
+}
+function wxLabelFor(code){
+  const map = {0:'Clear',1:'Mostly clear',2:'Partly cloudy',3:'Cloudy',45:'Foggy',48:'Foggy',
+    51:'Light drizzle',53:'Drizzle',55:'Drizzle',61:'Light rain',63:'Rain',65:'Heavy rain',
+    71:'Light snow',73:'Snow',75:'Heavy snow',80:'Showers',81:'Showers',82:'Heavy showers',
+    95:'Storms',96:'Storms',99:'Storms'};
+  return map[code] || 'Weather';
+}
+
+async function loadWeather(){
+  try{
+    const {lat, lon} = state.latlon;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&temperature_unit=celsius`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const temp = Math.round(data.current.temperature_2m);
+    const code = data.current.weather_code;
+    document.getElementById('wx-temp').textContent = temp+'°';
+    document.getElementById('wx-icon').textContent = wxIconFor(code);
+    document.getElementById('wx-lbl').textContent = wxLabelFor(code);
+  }catch(e){
+    document.getElementById('wx-lbl').textContent = 'Unavailable';
+    document.getElementById('wx-icon').textContent = '❔';
+  }
+}
+
+function openModal(){
+  document.getElementById('input-name-T').value = state.names.T;
+  document.getElementById('input-name-Y').value = state.names.Y;
+  document.getElementById('input-items-T').value = (state.items.T||[]).join('\n');
+  document.getElementById('input-items-Y').value = (state.items.Y||[]).join('\n');
+  document.getElementById('input-latlon').value = `${state.latlon.lat}, ${state.latlon.lon}`;
+  document.getElementById('input-start').value = state.schedule.start;
+  document.getElementById('input-leave').value = state.schedule.leave;
+  document.getElementById('modal-backdrop').classList.add('open');
+}
+function closeModal(){
+  document.getElementById('modal-backdrop').classList.remove('open');
+}
+async function saveModal(){
+  state.names.T = document.getElementById('input-name-T').value.trim() || 'T';
+  state.names.Y = document.getElementById('input-name-Y').value.trim() || 'Y';
+  state.items.T = document.getElementById('input-items-T').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  state.items.Y = document.getElementById('input-items-Y').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  const ll = document.getElementById('input-latlon').value.split(',').map(s=>parseFloat(s.trim()));
+  if(ll.length===2 && !isNaN(ll[0]) && !isNaN(ll[1])){
+    state.latlon = {lat:ll[0], lon:ll[1]};
+  }
+  const startVal = document.getElementById('input-start').value;
+  const leaveVal = document.getElementById('input-leave').value;
+  if(startVal) state.schedule.start = startVal;
+  if(leaveVal) state.schedule.leave = leaveVal;
+  // clamp checked indices to new item lengths
+  KIDS.forEach(k=>{
+    state.checked[k] = (state.checked[k]||[]).filter(i=> i < state.items[k].length);
+  });
+  await saveConfig();
+  await saveChecked();
+  closeModal();
+  render();
+  loadWeather();
+  updateLeaveBar();
+}
+
+(async function init(){
+  await loadState();
+  render();
+  tickClock();
+  updateLeaveBar();
+  loadWeather();
+  setInterval(loadWeather, 1000*60*30); // refresh weather every 30 min
+})();
+</script>
 </body>
 </html>
