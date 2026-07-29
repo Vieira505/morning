@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kids Morning Dashboard</title>
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --card-hover: #334155;
+      --text-color: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-color: #38bdf8;
+      --success-bg: #15803d;
+      --success-border: #22c55e;
+      --focus-outline: #facc15;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      user-select: none;
+    }
+
+    /* Lock layout to viewport height - ZERO SCROLLING */
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: 2vw;
+    }
+
+    /* Top Navigation Bar */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 12vh;
+      background: var(--card-bg);
+      padding: 0 3vw;
+      border-radius: 16px;
+      margin-bottom: 2vh;
+      border: 2px solid #334155;
+    }
+
+    .time-display {
+      font-size: 3.5vw;
+      font-weight: 800;
+      letter-spacing: -1px;
+      color: var(--accent-color);
+    }
+
+    .title-display {
+      font-size: 2.5vw;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .weather-display {
+      display: flex;
+      align-items: center;
+      gap: 1vw;
+      font-size: 2.2vw;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    /* Main Split-Screen Columns */
+    main {
+      display: flex;
+      gap: 2vw;
+      flex: 1;
+      height: 82vh;
+    }
+
+    .child-column {
+      flex: 1;
+      background: rgba(30, 41, 59, 0.4);
+      border: 2px solid #334155;
+      border-radius: 24px;
+      padding: 2vh 2vw;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .child-header {
+      font-size: 3vw;
+      font-weight: 800;
+      text-align: center;
+      padding-bottom: 1.5vh;
+      margin-bottom: 2vh;
+      border-bottom: 4px solid var(--accent-color);
+    }
+
+    .task-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5vh;
+      flex: 1;
+      justify-content: space-between;
+    }
+
+    /* Chunky Clickable Task Tiles */
+    .task-card {
+      flex: 1;
+      background: var(--card-bg);
+      border: 4px solid transparent;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      padding: 0 2vw;
+      font-size: 2.2vw;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      outline: none;
+      position: relative;
+    }
+
+    /* TV D-Pad Focus State - Bright Gold Outline */
+    .task-card:focus {
+      border-color: var(--focus-outline);
+      transform: scale(1.01);
+      box-shadow: 0 0 25px rgba(250, 204, 21, 0.4);
+      z-index: 10;
+    }
+
+    .task-card:hover {
+      background: var(--card-hover);
+    }
+
+    /* Completed Task Styling */
+    .task-card.completed {
+      background: var(--success-bg);
+      border-color: var(--success-border);
+      color: #ffffff;
+      text-decoration: line-through;
+      opacity: 0.9;
+    }
+
+    .task-card.completed:focus {
+      border-color: var(--focus-outline);
+    }
+
+    .checkbox-icon {
+      font-size: 2.8vw;
+      margin-right: 1.5vw;
+      width: 4vw;
+      text-align: center;
+    }
+
+    /* Celebration Banner */
+    #celebration {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(15, 23, 42, 0.95);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+    }
+
+    #celebration.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .celebration-title {
+      font-size: 6vw;
+      font-weight: 900;
+      color: var(--focus-outline);
+      text-shadow: 0 0 30px rgba(250, 204, 21, 0.6);
+      margin-bottom: 2vh;
+      text-align: center;
+    }
+
+    .celebration-subtitle {
+      font-size: 3vw;
+      color: var(--text-color);
+      margin-bottom: 5vh;
+    }
+
+    .reset-btn {
+      padding: 2vh 4vw;
+      font-size: 2vw;
+      font-weight: 800;
+      background: var(--accent-color);
+      color: #000;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .reset-btn:focus {
+      border: 4px solid var(--focus-outline);
+      box-shadow: 0 0 25px rgba(250, 204, 21, 0.8);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="time-display" id="clock">00:00</div>
+    <div class="title-display">Morning Command Center</div>
+    <div class="weather-display" id="weather">Loading Weather...</div>
+  </header>
+
+  <main>
+    <!-- Child T Column -->
+    <div class="child-column">
+      <div class="child-header" style="color: #60a5fa;">T's Checklist</div>
+      <div class="task-list" id="list-T"></div>
+    </div>
+
+    <!-- Child Y Column -->
+    <div class="child-column">
+      <div class="child-header" style="color: #f472b6;">Y's Checklist</div>
+      <div class="task-list" id="list-Y"></div>
+    </div>
+  </main>
+
+  <!-- Celebration Modal -->
+  <div id="celebration">
+    <div class="celebration-title">🎉 ALL DONE! 🎉</div>
+    <div class="celebration-subtitle">Great job T and Y! You have unlocked TV time.</div>
+    <button class="reset-btn" id="reset-btn" tabindex="0">Reset for Tomorrow</button>
+  </div>
+
+  <script>
+    /* --- CONFIGURATION --- */
+    // 1. Customize Names and Tasks here
+    const ROUTINES = {
+      T: [
+        { id: 't1', text: '🛏️ Make Bed' },
+        { id: 't2', text: '🦷 Brush Teeth' },
+        { id: 't3', text: '👕 Get Dressed' },
+        { id: 't4', text: '🎒 Pack School Bag' },
+        { id: 't5', text: '🥣 Eat Breakfast' }
+      ],
+      Y: [
+        { id: 'y1', text: '🛏️ Make Bed' },
+        { id: 'y2', text: '🦷 Brush Teeth' },
+        { id: 'y3', text: '👕 Get Dressed' },
+        { id: 'y4', text: '🎒 Pack School Bag' },
+        { id: 'y5', text: '🥣 Eat Breakfast' }
+      ]
+    };
+
+    // 2. Weather Coordinates (Default: South Nowra, NSW, Australia)
+    const WEATHER_LAT = -34.88;
+    const WEATHER_LON = 150.60;
+    /* --------------------- */
+
+    // Load saved state or initialize empty object
+    let state = JSON.parse(localStorage.getItem('morningRoutineState')) || {};
+
+    // Auto-Reset at 3:00 AM logic
+    function checkAutoReset() {
+      const now = new Date();
+      const todayStr = now.toISOString().split('T')[0];
+      const lastReset = localStorage.getItem('lastResetDate');
+
+      // If it's past 3 AM and hasn't been reset today
+      if (now.getHours() >= 3 && lastReset !== todayStr) {
+        state = {};
+        localStorage.setItem('morningRoutineState', JSON.stringify(state));
+        localStorage.setItem('lastResetDate', todayStr);
+        render();
+      }
+    }
+
+    // Render task items into columns
+    function render() {
+      renderList('T', 'list-T');
+      renderList('Y', 'list-Y');
+      checkAllCompleted();
+      setupDPadNavigation();
+    }
+
+    function renderList(childKey, elementId) {
+      const container = document.getElementById(elementId);
+      container.innerHTML = '';
+
+      ROUTINES[childKey].forEach((task, index) => {
+        const isDone = !!state[task.id];
+        const card = document.createElement('div');
+        card.className = `task-card ${isDone ? 'completed' : ''}`;
+        card.setAttribute('tabindex', '0');
+        card.setAttribute('data-col', childKey === 'T' ? '0' : '1');
+        card.setAttribute('data-row', index);
+        card.setAttribute('role', 'checkbox');
+        card.setAttribute('aria-checked', isDone);
+
+        card.innerHTML = `
+          <span class="checkbox-icon">${isDone ? '✅' : '⬜'}</span>
+          <span>${task.text}</span>
+        `;
+
+        // Mouse click or OK/Select button on TV remote
+        card.addEventListener('click', () => toggleTask(task.id));
+        
+        // Ensure standard TV OK button triggers click
+        card.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggleTask(task.id);
+          }
+        });
+
+        container.appendChild(card);
+      });
+    }
+
+    function toggleTask(id) {
+      state[id] = !state[id];
+      localStorage.setItem('morningRoutineState', JSON.stringify(state));
+      render();
+    }
+
+    function checkAllCompleted() {
+      const allT = ROUTINES.T.every(task => state[task.id]);
+      const allY = ROUTINES.Y.every(task => state[task.id]);
+      const celebEl = document.getElementById('celebration');
+
+      if (allT && allY && ROUTINES.T.length > 0) {
+        celebEl.classList.add('active');
+        setTimeout(() => {
+          document.getElementById('reset-btn').focus();
+        }, 500);
+      } else {
+        celebEl.classList.remove('active');
+      }
+    }
+
+    // Explicit TV D-Pad Spatial Navigation
+    function setupDPadNavigation() {
+      const cards = Array.from(document.querySelectorAll('.task-card'));
+      
+      cards.forEach(card => {
+        card.addEventListener('keydown', (e) => {
+          const col = parseInt(card.getAttribute('data-col'));
+          const row = parseInt(card.getAttribute('data-row'));
+          let target = null;
+
+          if (e.key === 'ArrowDown') {
+            target = document.querySelector(`.task-card[data-col="${col}"][data-row="${row + 1}"]`);
+          } else if (e.key === 'ArrowUp') {
+            target = document.querySelector(`.task-card[data-col="${col}"][data-row="${row - 1}"]`);
+          } else if (e.key === 'ArrowRight' && col === 0) {
+            target = document.querySelector(`.task-card[data-col="1"][data-row="${row}"]`) || 
+                     document.querySelector(`.task-card[data-col="1"][data-row="0"]`);
+          } else if (e.key === 'ArrowLeft' && col === 1) {
+            target = document.querySelector(`.task-card[data-col="0"][data-row="${row}"]`) ||
+                     document.querySelector(`.task-card[data-col="0"][data-row="0"]`);
+          }
+
+          if (target) {
+            e.preventDefault();
+            target.focus();
+          }
+        });
+      });
+    }
+
+    // Clock Feed
+    function updateClock() {
+      const now = new Date();
+      let hours = now.getHours();
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12 || 12;
+      document.getElementById('clock').textContent = `${hours}:${minutes} ${ampm}`;
+    }
+
+    // Open-Meteo Free Weather Feed
+    async function fetchWeather() {
+      const weatherEl = document.getElementById('weather');
+      try {
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${WEATHER_LAT}&longitude=${WEATHER_LON}&current_weather=true`;
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data && data.current_weather) {
+          const temp = Math.round(data.current_weather.temperature);
+          const code = data.current_weather.weathercode;
+          const icon = getWeatherIcon(code);
+          weatherEl.innerHTML = `${icon} ${temp}°C`;
+        }
+      } catch (err) {
+        weatherEl.textContent = 'Weather Unavailable';
+        console.error('Weather fetch error:', err);
+      }
+    }
+
+    // WMO Weather Code Mapper
+    function getWeatherIcon(code) {
+      if (code === 0) return '☀️';
+      if ([1, 2, 3].includes(code)) return '⛅';
+      if ([45, 48].includes(code)) return '🌫️';
+      if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code)) return '🌧️';
+      if ([71, 73, 75, 85, 86].includes(code)) return '❄️';
+      if ([95, 96, 99].includes(code)) return '⛈️';
+      return '🌡️';
+    }
+
+    // Manual Reset Button
+    document.getElementById('reset-btn').addEventListener('click', () => {
+      state = {};
+      localStorage.setItem('morningRoutineState', JSON.stringify(state));
+      render();
+    });
+
+    // Initialize App
+    checkAutoReset();
+    render();
+    updateClock();
+    fetchWeather();
+
+    // Auto-focus first item on load for remote control convenience
+    setTimeout(() => {
+      const firstCard = document.querySelector('.task-card');
+      if (firstCard) firstCard.focus();
+    }, 300);
+
+    // Timers
+    setInterval(updateClock, 1000);
+    setInterval(checkAutoReset, 60 * 1000); // Check reset condition every minute
+    setInterval(fetchWeather, 30 * 60 * 1000); // Update weather every 30 mins
+  </script>
+</body>
+</html>
