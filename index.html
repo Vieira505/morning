@@ -202,6 +202,8 @@
     min-height:0;
     justify-content:center;
   }
+  .item.readonly{cursor:default;}
+  .item.readonly:hover{transform:none;}
   .item{
     display:flex;align-items:center;gap:1vw;
     background:#fff;
@@ -426,17 +428,19 @@
 </svg>
 
 <script>
+const DISPLAY_MODE = new URLSearchParams(location.search).get('mode') === 'display';
+
 const KIDS = ['T','Y'];
 const DEFAULT_ITEMS = {
-  T: ['Brush teeth','Get dressed','Make bed','Eat breakfast','Pack school bag','Deodorant'],
-  Y: ['Brush teeth','Get dressed','Make bed','Eat breakfast','Pack school bag','Deodorant']
+  T: ['Teeth','Hair','Make bed','Get dressed','Deodorant','Eat breakfast','Pack school bag'],
+  Y: ['Teeth','Hair','Make bed','Get dressed','Deodorant','Eat breakfast','Pack school bag']
 };
-const DEFAULT_LATLON = { lat:-34.563793, lon:150.819122 }; // Sydney
+const DEFAULT_LATLON = { lat:-33.8688, lon:151.2093 }; // Sydney
 
-const DEFAULT_SCHEDULE = { start:'06:00', leave:'08:30' };
+const DEFAULT_SCHEDULE = { start:'07:00', leave:'08:30' };
 
 let state = {
-  names:{T:'T',Y:'Y'},
+  names:{T:'Y',Y:'T'},
   items:{...DEFAULT_ITEMS},
   latlon:{...DEFAULT_LATLON},
   schedule:{...DEFAULT_SCHEDULE},
@@ -514,7 +518,7 @@ function render(){
     items.forEach((label, idx)=>{
       const checked = state.checked[kid]?.includes(idx);
       const el = document.createElement('div');
-      el.className = 'item' + (checked?' checked':'');
+      el.className = 'item' + (checked?' checked':'') + (DISPLAY_MODE?' readonly':'');
       el.tabIndex = -1;
       el.dataset.kid = kid; el.dataset.idx = idx;
       el.style.padding = (1.1*scale)+'vh '+(1.2)+'vw';
@@ -522,12 +526,14 @@ function render(){
         <div class="box"><svg><use href="#check-svg"/></svg></div>
         <span class="label">${escapeHtml(label)}</span>
       `;
-      el.addEventListener('click', ()=>toggleItem(kid, idx));
-      el.addEventListener('mouseenter', ()=>{
-        focus.col = colOrder.indexOf(kid);
-        focus.idx = idx;
-        applyFocus();
-      });
+      if(!DISPLAY_MODE){
+        el.addEventListener('click', ()=>toggleItem(kid, idx));
+        el.addEventListener('mouseenter', ()=>{
+          focus.col = colOrder.indexOf(kid);
+          focus.idx = idx;
+          applyFocus();
+        });
+      }
       container.appendChild(el);
     });
 
@@ -541,7 +547,7 @@ function render(){
   });
 
   updateSun();
-  applyFocus();
+  if(!DISPLAY_MODE) applyFocus();
 
   const allDone = KIDS.every(k=>{
     const total = (state.items[k]||[]).length;
@@ -549,7 +555,8 @@ function render(){
     return total>0 && done===total;
   });
   const footer = document.getElementById('footer');
-  footer.textContent = allDone ? '🎉 Both lists complete — TV time!' : 'Use ↑ ↓ ← → on the remote, press Enter/OK to check off a task';
+  const instructions = DISPLAY_MODE ? 'Check off tasks from a phone or tablet' : 'Use ↑ ↓ ← → on the remote, press Enter/OK to check off a task';
+  footer.textContent = allDone ? '🎉 Both lists complete — TV time!' : instructions;
   footer.classList.toggle('celebrate', allDone);
 }
 
@@ -592,6 +599,7 @@ function applyFocus(){
 }
 
 document.addEventListener('keydown', (e)=>{
+  if(DISPLAY_MODE) return;
   if(document.getElementById('modal-backdrop').classList.contains('open')) return;
   const kid = colOrder[focus.col];
   const items = state.items[kid] || [];
@@ -755,11 +763,20 @@ async function saveModal(){
 
 (async function init(){
   await loadState();
+  if(DISPLAY_MODE){
+    document.getElementById('gear').style.display = 'none';
+  }
   render();
   tickClock();
   updateLeaveBar();
   loadWeather();
   setInterval(loadWeather, 1000*60*30); // refresh weather every 30 min
+  if(DISPLAY_MODE){
+    setInterval(async ()=>{
+      await loadState();
+      render();
+    }, 1000*8); // pick up checks made from another device
+  }
 })();
 </script>
 </body>
