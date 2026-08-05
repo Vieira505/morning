@@ -6,6 +6,8 @@
 <title>Morning Launch</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <style>
   :root{
     --sky-top:#16213E;
@@ -432,8 +434,8 @@ const DISPLAY_MODE = new URLSearchParams(location.search).get('mode') === 'displ
 
 const KIDS = ['T','Y'];
 const DEFAULT_ITEMS = {
-  T: ['Teeth','Hair','Make bed','Get dressed','Deodorant','Eat breakfast','Pack school bag'],
-  Y: ['Teeth','Hair','Make bed','Get dressed','Deodorant','Eat breakfast','Pack school bag']
+  T:['Teeth','Hair','Make bed','Get dressed','Deodorant','Eat breakfast','Pack school bag'],
+  Y:['Teeth','Hair','Make bed','Get dressed','Deodorant','Eat breakfast','Pack school bag']
 };
 const DEFAULT_LATLON = { lat:-33.8688, lon:151.2093 }; // Sydney
 
@@ -450,45 +452,69 @@ let state = {
 let focus = { col:0, idx:0 };
 let colOrder = ['T','Y'];
 
+const firebaseConfig = {
+  apiKey: "AIzaSyCtz3Je5HGJaiRaREHih4dR5sBDjL9niYo",
+  authDomain: "morning-b4cde.firebaseapp.com",
+  databaseURL: "https://morning-b4cde-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "morning-b4cde",
+  storageBucket: "morning-b4cde.firebasestorage.app",
+  messagingSenderId: "393346699249",
+  appId: "1:393346699249:web:4169734429c42b143bfe50"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const configRef = db.ref('config');
+let checkedRef = null; // set once we know today's key
+
 function todayKey(){
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
-async function loadState(){
-  try{
-    const cfg = await window.storage.get('checklist-config', true);
-    if(cfg && cfg.value){
-      const parsed = JSON.parse(cfg.value);
-      state.names = parsed.names || state.names;
-      state.items = parsed.items || state.items;
-      state.latlon = parsed.latlon || state.latlon;
-      state.schedule = parsed.schedule || state.schedule;
-    }
-  }catch(e){ /* first run, no config yet */ }
-
-  try{
-    const chk = await window.storage.get('checklist-checked-'+todayKey(), true);
-    if(chk && chk.value){
-      state.checked = JSON.parse(chk.value);
-    }
-  }catch(e){
-    state.checked = {T:[],Y:[]};
-  }
-}
-
 async function saveConfig(){
   try{
-    await window.storage.set('checklist-config', JSON.stringify({
+    await configRef.set({
       names:state.names, items:state.items, latlon:state.latlon, schedule:state.schedule
-    }), true);
+    });
   }catch(e){ console.error('save config failed', e); }
 }
 
-async function saveChecked(){
-  try{
-    await window.storage.set('checklist-checked-'+todayKey(), JSON.stringify(state.checked), true);
-  }catch(e){ console.error('save checked failed', e); }
+function toggleItem(kid, idx){
+  if(!state.checked[kid]) state.checked[kid] = [];
+  const pos = state.checked[kid].indexOf(idx);
+  if(pos>=0) state.checked[kid].splice(pos,1);
+  else state.checked[kid].push(idx);
+  checkedRef.set(state.checked).catch(e=>console.error('save checked failed', e));
+  render(); // optimistic local update; the listener will confirm/re-sync shortly
+}
+
+function initFirebaseSync(onReady){
+  let configLoaded = false, checkedLoaded = false;
+  const maybeReady = ()=>{ if(configLoaded && checkedLoaded && onReady){ onReady(); onReady = null; } };
+
+  configRef.on('value', snap=>{
+    const val = snap.val();
+    if(val){
+      state.names = val.names || state.names;
+      state.items = val.items || state.items;
+      state.latlon = val.latlon || state.latlon;
+      state.schedule = val.schedule || state.schedule;
+    }else{
+      // nothing in the db yet — seed it with our defaults
+      saveConfig();
+    }
+    configLoaded = true;
+    maybeReady();
+    render();
+  }, err=>console.error('config listener error', err));
+
+  checkedRef = db.ref('checked/'+todayKey());
+  checkedRef.on('value', snap=>{
+    state.checked = snap.val() || {T:[],Y:[]};
+    checkedLoaded = true;
+    maybeReady();
+    render();
+  }, err=>console.error('checked listener error', err));
 }
 
 function densityClass(n){
@@ -564,15 +590,6 @@ function escapeHtml(s){
   const d = document.createElement('div');
   d.textContent = s;
   return d.innerHTML;
-}
-
-function toggleItem(kid, idx){
-  if(!state.checked[kid]) state.checked[kid] = [];
-  const pos = state.checked[kid].indexOf(idx);
-  if(pos>=0) state.checked[kid].splice(pos,1);
-  else state.checked[kid].push(idx);
-  saveChecked();
-  render();
 }
 
 function updateSun(){
@@ -754,29 +771,37 @@ async function saveModal(){
     state.checked[k] = (state.checked[k]||[]).filter(i=> i < state.items[k].length);
   });
   await saveConfig();
-  await saveChecked();
+  await checkedRef.set(state.checked);
   closeModal();
   render();
   loadWeather();
   updateLeaveBar();
 }
 
-(async function init(){
-  await loadState();
+(function init(){
   if(DISPLAY_MODE){
     document.getElementById('gear').style.display = 'none';
   }
-  render();
   tickClock();
   updateLeaveBar();
   loadWeather();
   setInterval(loadWeather, 1000*60*30); // refresh weather every 30 min
-  if(DISPLAY_MODE){
-    setInterval(async ()=>{
-      await loadState();
-      render();
-    }, 1000*8); // pick up checks made from another device
-  }
+  initFirebaseSync(()=>{
+    // both config and today's checked state have loaded at least once
+    render();
+  });
+  // roll over to a new day's checked-state ref automatically if left open overnight
+  setInterval(()=>{
+    const freshKey = todayKey();
+    if(checkedRef && checkedRef.key !== freshKey){
+      checkedRef.off();
+      checkedRef = db.ref('checked/'+freshKey);
+      checkedRef.on('value', snap=>{
+        state.checked = snap.val() || {T:[],Y:[]};
+        render();
+      });
+    }
+  }, 1000*60);
 })();
 </script>
 </body>
